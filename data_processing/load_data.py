@@ -83,6 +83,27 @@ class LoadData:
 
             return [accel_path, hr_path, start_path], absolute_start_time, package_start_time, ['acceleration.npy', 'heartrate.npy', 'start_time.json']
         return [accel_path, hr_path], absolute_start_time, package_start_time, ['acceleration.npy', 'heartrate.npy']
+    
+    def write_data_to_numpy_array(accelData, HRData, absolute_start_time, package_start_time):
+        print(f'timestamp absolute: {datetime.datetime.fromtimestamp(package_start_time)}')
+        print(f"timestamp relative: {accelData['timestamp'][0]}")
+
+        accel_timestamp = np.array(accelData['timestamp'])
+        x = np.array(accelData['x'])
+        y = np.array(accelData['y'])
+        z = np.array(accelData['z'])
+        accel_data_array = np.vstack([accel_timestamp, x, y, z])
+        print(f'accel array shape: {accel_data_array.shape}')
+
+        hr_timestamp = np.array(HRData['timestamp'])
+        hr = np.array(HRData['HR'])
+        hr_data_array = np.vstack([hr_timestamp, hr])
+        print(f'hr array shape: {hr_data_array.shape}')
+
+        if abs(absolute_start_time - package_start_time) < 1:
+            start_time = np.array([absolute_start_time])
+            return [accel_data_array, hr_data_array, start_time], absolute_start_time, package_start_time, ['acceleration.npy', 'heartrate.npy', 'start_time.npy']
+        return [accel_data_array, hr_data_array], absolute_start_time, package_start_time, ['acceleration.npy', 'heartrate.npy']
 
     def write_apple_sleep_data_to_file(json_data, docker_root):
         sleep_data = json_data['sleepSegments']
@@ -98,3 +119,11 @@ class LoadData:
             json.dump(sleep_data, f, indent=4)
 
         return userID, session_start_date, sleep_path
+    
+    def write_apple_sleep_data_to_json(json_data):
+        sleep_data = json_data['sleepSegments']
+        user_id = json_data['userID']
+        session_start_date = json_data['sessionStartTime']
+
+        sleep_data_bytes = json.dumps(sleep_data).encode('utf-8')
+        return sleep_data_bytes, user_id, session_start_date
