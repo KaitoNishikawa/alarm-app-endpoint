@@ -2,7 +2,7 @@ import os
 import sys
 import json
 import boto3
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from datetime import datetime
 from flask import Flask, jsonify, request
 
@@ -13,27 +13,25 @@ sys.path.insert(0, docker_root)
 from data_processing.load_data import LoadData
 from aws.s3_stuff import S3_Stuff
 
-load_dotenv()
-access_key = os.getenv('AWS_ACCESS_KEY_ID')
-secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
+# load_dotenv()
+# access_key = os.getenv('AWS_ACCESS_KEY_ID')
+# secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
+# 
+# if not access_key or not secret_access_key:
+#     print("WARNING: AWS Credentials not found in environment variables!")
+# else:
+#     print("AWS Credentials found.")
 
-s3 = boto3.resource(
-    "s3",
-    aws_access_key_id = access_key,
-    aws_secret_access_key = secret_access_key,
-)
+s3 = boto3.resource("s3")
 
-file_number = datetime.now().strftime("%Y%m%d")
-# file_number = "20241222"
-print(f"date: {file_number}")
 app = Flask(__name__)
 
-@app.route('/hello')
+@app.route('/api/hello')
 def hello_world():
     # runner.run_preprocessing(["20251213", "20251214", "20251215", "20251217"])
-    return jsonify(message='Hello World')
+    return jsonify(message='Hello World (API)')
 
-@app.route('/data', methods=["POST"])
+@app.route('/api/data', methods=["POST"])
 def receive():
     if request.is_json:
         json_data = request.get_json()
@@ -50,7 +48,7 @@ def receive():
     else:
         return jsonify(message="Request was not JSON"), 400
     
-@app.route('/sleep_data', methods=["POST"])
+@app.route('/api/sleep_data', methods=["POST"])
 def receive_sleep_data():
     if request.is_json:
         json_data = request.get_json()
@@ -62,7 +60,7 @@ def receive_sleep_data():
     else:
         return jsonify(message="Request was not JSON"), 400
     
-@app.route('/get_predictions', methods=['POST'])
+@app.route('/api/get_predictions', methods=['POST'])
 def get_predictions():
     if request.is_json:
         json_data = request.get_json()
@@ -83,9 +81,9 @@ def get_predictions():
             return jsonify(predictions=predictions, status=str(predictions[-10:])), 200
         except s3.meta.client.exceptions.NoSuchKey:
             # File isn't ready yet
-            return jsonify(status="no prediction file"), 202 
+            return jsonify(predictions=[], status="no prediction file"), 202 
         except Exception as e:
             return jsonify(status=str(e)), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001)
+    app.run(host='0.0.0.0', port=5000)
